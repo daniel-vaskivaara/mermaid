@@ -20,7 +20,7 @@ jobs:
             --location \
             -H "Authorization: token ${{ secrets.PAT_IMEC_POC }}" \
             https://api.github.com/stafftools/reports/all_users.csv
-            
+
           #   curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/user"
 
           #   # Get the list of repositories for the authenticated user (or your org if you adjust)
@@ -50,3 +50,9 @@ jobs:
           #       fi
           #     fi
           #   done
+
+      - name: Upload CSV as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: users-report-csv
+          path: ./all_users.csv
