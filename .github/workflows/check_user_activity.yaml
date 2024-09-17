@@ -1,0 +1,44 @@
+name: Check Dormant User
+
+on:
+  workflow_dispatch:  # Allows you to manually trigger the workflow
+  push:
+
+jobs:
+  check_user_activity:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check for user activity
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          USERNAME: daniel-vaskivaara
+          # This action will fetch all repositories and check activity for the given username
+        run: |
+          # Get the list of repositories for the authenticated user (or your org if you adjust)
+          repos=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/user/repos?per_page=100" | jq -r '.[].full_name')
+
+          # Iterate through the repositories and check for the user's activity
+          for repo in $repos; do
+            echo "Checking activity for user $USERNAME in repo $repo"
+
+            # Fetch the latest commits by the user in the repository
+            commit_activity=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/$repo/commits?author=$USERNAME")
+
+            if [[ -z "$commit_activity" || "$commit_activity" == "[]" ]]; then
+              echo "No commits found for user $USERNAME in repo $repo"
+            else
+              # Extract the latest commit date
+              latest_commit_date=$(echo "$commit_activity" | jq -r '.[0].commit.author.date')
+
+              # Compare the commit date to see if it is recent
+              now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+              difference=$(echo $(( ($(date -d "$now" +%s) - $(date -d "$latest_commit_date" +%s)) / (60*60*24) )))
+
+              if [[ "$difference" -gt 180 ]]; then
+                echo "User $USERNAME is dormant in $repo (last commit $latest_commit_date)"
+              else
+                echo "User $USERNAME is active in $repo (last commit $latest_commit_date)"
+              fi
+            fi
+          done
