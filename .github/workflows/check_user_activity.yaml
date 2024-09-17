@@ -15,8 +15,14 @@ jobs:
           USERNAME: daniel-vaskivaara
           # This action will fetch all repositories and check activity for the given username
         run: |
-          curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/user"
-          
+          curl \
+            --remote-name \
+            --location \
+            -H "Authorization: token ${{ secrets.PAT_IMEC_POC }}" \
+            https://api.github.com/stafftools/reports/all_users.csv
+            
+          #   curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/user"
+
           #   # Get the list of repositories for the authenticated user (or your org if you adjust)
           #   repos=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/user/repos?per_page=100" | jq -r '.[].full_name')
   
